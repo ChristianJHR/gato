@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Gato Pastelero</title>
+    <title>El Gato Pastelero 🎂</title>
     <style>
         body {
             margin: 0;
@@ -21,6 +21,7 @@
             color: #ff6b6b;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
             margin: 20px 0;
+            font-size: 2.5em;
         }
 
         #game-container {
@@ -41,9 +42,16 @@
             position: absolute;
             top: 10px;
             left: 10px;
+            right: 10px;
             background: rgba(255, 255, 255, 0.7);
             padding: 10px;
             border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #ingredients-ui {
             display: flex;
             gap: 15px;
         }
@@ -52,16 +60,15 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            font-size: 1.5em;
         }
 
-        .ui-icon {
-            width: 20px;
-            height: 20px;
-            background-size: contain;
-            background-repeat: no-repeat;
+        #lives {
+            font-size: 1.5em;
+            color: #ff0000;
         }
 
-        #start-screen, #end-screen {
+        #start-screen, #end-screen, #game-over-screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -74,9 +81,10 @@
             background: rgba(0, 0, 0, 0.7);
             color: white;
             z-index: 10;
+            text-align: center;
         }
 
-        #end-screen {
+        #end-screen, #game-over-screen {
             display: none;
         }
 
@@ -107,6 +115,12 @@
             max-width: 600px;
             text-align: center;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: 1.1em;
+        }
+
+        .emoji-large {
+            font-size: 3em;
+            margin: 10px;
         }
 
         @media (max-width: 850px) {
@@ -118,52 +132,83 @@
             .instructions {
                 width: 90%;
             }
+            
+            .ui-item, #lives {
+                font-size: 1.2em;
+            }
         }
 
         @media (max-width: 500px) {
             #ui {
                 flex-direction: column;
                 gap: 5px;
+                align-items: flex-start;
+            }
+            
+            #ingredients-ui {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
             }
         }
     </style>
 </head>
 <body>
-    <h1>El Gato Pastelero</h1>
+    <h1>El Gato Pastelero 🎂</h1>
     
     <div class="instructions">
-        ¡Ayuda al gato a recolectar todos los ingredientes para hacer un pastel!<br>
-        Usa las flechas del teclado para moverte y la barra espaciadora para saltar.
+        ¡Ayuda al gato 😺 a recolectar todos los ingredientes para hacer un pastel!<br>
+        Usa las flechas del teclado para moverte y la barra espaciadora para saltar.<br>
+        Ten cuidado, si te caes perderás una vida ❤️❤️❤️
     </div>
     
     <div id="game-container">
         <canvas id="game-canvas" width="800" height="500"></canvas>
         
         <div id="ui">
-            <div class="ui-item">
-                <div class="ui-icon" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23FF6B6B\"><path d=\"M12 3c-4.97 0-9 3.185-9 7.115 0 2.557 1.522 4.82 3.889 6.115l-.78 2.77h11.782l-.78-2.77C19.478 14.935 21 12.672 21 10.115 21 6.185 16.97 3 12 3zm0 1c4.39 0 8 2.817 8 6.115 0 2.01-1.208 3.8-3.08 4.886l-.92.514.28.996.5 1.78H7.22l.5-1.78.28-.996-.92-.514C5.208 13.915 4 12.125 4 10.115 4 6.817 7.61 4 12 4z\"/></svg>');"></div>
-                <span id="harina-counter">0</span>/3
+            <div id="ingredients-ui">
+                <div class="ui-item">
+                    <span>🍞</span>
+                    <span id="harina-counter">0</span>/2
+                </div>
+                <div class="ui-item">
+                    <span>🥚</span>
+                    <span id="huevos-counter">0</span>/3
+                </div>
+                <div class="ui-item">
+                    <span>🥛</span>
+                    <span id="leche-counter">0</span>/1
+                </div>
+                <div class="ui-item">
+                    <span>🍓</span>
+                    <span id="fresas-counter">0</span>/4
+                </div>
             </div>
-            <div class="ui-item">
-                <div class="ui-icon" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23FF6B6B\"><path d=\"M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6V22h12v-5.99h-.01L18 16l-4-4 4-3.99-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zM16 4v3.5l-4 4-4-4V4h8z\"/></svg>');"></div>
-                <span id="huevos-counter">0</span>/2
-            </div>
-            <div class="ui-item">
-                <div class="ui-icon" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23FF6B6B\"><path d=\"M12 3c-3.148 0-6 2.553-6 5.702 0 3.148 2.602 6.907 6 12.298 3.398-5.391 6-9.15 6-12.298C18 5.553 15.148 3 12 3zm0 8c-1.105 0-2-.895-2-2s.895-2 2-2 2 .895 2 2-.895 2-2 2z\"/></svg>');"></div>
-                <span id="frutas-counter">0</span>/4
-            </div>
+            <div id="lives">❤️❤️❤️</div>
         </div>
         
         <div id="start-screen">
-            <h2>El Gato Pastelero</h2>
+            <h2>El Gato Pastelero 🎂</h2>
             <p>Recolecta todos los ingredientes para hacer el mejor pastel</p>
+            <div class="emoji-large">😺</div>
             <button id="start-button">Comenzar</button>
         </div>
         
         <div id="end-screen">
-            <h2>¡Pastel completado!</h2>
-            <p>El gato ha recolectado todos los ingredientes</p>
+            <h2>¡Pastel completado! 🎂</h2>
+            <p>¡Has cocinado el mejor pastel!</p>
+            <div class="emoji-large">🎂</div>
             <button id="restart-button">Jugar de nuevo</button>
+        </div>
+        
+        <div id="game-over-screen">
+            <h2>¡Game Over! 🙀</h2>
+            <p>El gato se quedó sin vidas...</p>
+            <div class="emoji-large">🙀</div>
+            <button id="try-again-button">Intentar de nuevo</button>
         </div>
     </div>
     
@@ -173,17 +218,36 @@
             const ctx = canvas.getContext('2d');
             const startScreen = document.getElementById('start-screen');
             const endScreen = document.getElementById('end-screen');
+            const gameOverScreen = document.getElementById('game-over-screen');
             const startButton = document.getElementById('start-button');
             const restartButton = document.getElementById('restart-button');
+            const tryAgainButton = document.getElementById('try-again-button');
             const harinaCounter = document.getElementById('harina-counter');
             const huevosCounter = document.getElementById('huevos-counter');
-            const frutasCounter = document.getElementById('frutas-counter');
+            const lecheCounter = document.getElementById('leche-counter');
+            const fresasCounter = document.getElementById('fresas-counter');
+            const livesDisplay = document.getElementById('lives');
             
             // Ajustar tamaño del canvas en dispositivos móviles
             function resizeCanvas() {
                 const container = document.getElementById('game-container');
                 canvas.width = container.clientWidth;
                 canvas.height = container.clientHeight;
+                // Ajustar plataformas y jugador al nuevo tamaño
+                if (gameRunning) {
+                    adjustGameElements();
+                }
+            }
+            
+            function adjustGameElements() {
+                // Ajustar plataforma base
+                platforms[0].width = canvas.width;
+                platforms[0].y = canvas.height - 40;
+                
+                // Ajustar posición del jugador
+                if (player.y + player.height > canvas.height) {
+                    player.y = canvas.height - player.height;
+                }
             }
             
             window.addEventListener('resize', resizeCanvas);
@@ -191,15 +255,18 @@
             
             // Variables del juego
             let gameRunning = false;
-            let score = { harina: 0, huevos: 0, frutas: 0 };
-            const required = { harina: 3, huevos: 2, frutas: 4 };
+            let score = { harina: 0, huevos: 0, leche: 0, fresas: 0 };
+            const required = { harina: 2, huevos: 3, leche: 1, fresas: 4 };
+            let lives = 3;
+            let catEmoji = '😺';
+            let lastIngredientCollectedTime = 0;
             
             // Objetos del juego
             const player = {
                 x: 50,
                 y: 400,
                 width: 40,
-                height: 60,
+                height: 40,
                 speed: 5,
                 jumpForce: 12,
                 velocityY: 0,
@@ -208,166 +275,118 @@
             };
             
             const platforms = [
-                { x: 0, y: 460, width: 200, height: 40 },
-                { x: 250, y: 400, width: 150, height: 40 },
-                { x: 450, y: 350, width: 150, height: 40 },
-                { x: 650, y: 300, width: 150, height: 40 },
-                { x: 500, y: 460, width: 300, height: 40 }
+                { x: 0, y: 460, width: 800, height: 40 }, // Plataforma base
+                { x: 200, y: 400, width: 150, height: 20 },
+                { x: 400, y: 350, width: 150, height: 20 },
+                { x: 100, y: 300, width: 150, height: 20 },
+                { x: 550, y: 250, width: 150, height: 20 },
+                { x: 300, y: 200, width: 150, height: 20 },
+                { x: 50, y: 150, width: 150, height: 20 },
+                { x: 450, y: 100, width: 150, height: 20 }
             ];
             
             let ingredients = [];
+            let floatingIngredients = [];
             
             // Generar ingredientes aleatorios
             function generateIngredients() {
                 ingredients = [];
+                floatingIngredients = [];
                 
-                // Harina (3)
-                for (let i = 0; i < 3; i++) {
+                // Harina (2) - en plataformas altas
+                for (let i = 0; i < 2; i++) {
+                    const platform = platforms[Math.floor(Math.random() * 3) + 4]; // Plataformas más altas
                     ingredients.push({
                         type: 'harina',
-                        x: Math.random() * (canvas.width - 30),
-                        y: Math.random() * (canvas.height - 100),
-                        width: 20,
-                        height: 20,
+                        x: platform.x + Math.random() * (platform.width - 30),
+                        y: platform.y - 30,
+                        width: 30,
+                        height: 30,
                         collected: false
                     });
                 }
                 
-                // Huevos (2)
-                for (let i = 0; i < 2; i++) {
+                // Huevos (3) - en plataformas medias
+                for (let i = 0; i < 3; i++) {
+                    const platform = platforms[Math.floor(Math.random() * 3) + 1]; // Plataformas medias
                     ingredients.push({
                         type: 'huevos',
-                        x: Math.random() * (canvas.width - 30),
-                        y: Math.random() * (canvas.height - 100),
-                        width: 20,
-                        height: 20,
-                        collected: false
+                        x: platform.x + Math.random() * (platform.width - 30),
+                        y: platform.y - 30,
+                        width: 30,
+                        height: 30,
+                        collected: false,
+                        floating: Math.random() > 0.5
                     });
-                }
-                
-                // Frutas (4)
-                for (let i = 0; i < 4; i++) {
-                    ingredients.push({
-                        type: 'frutas',
-                        x: Math.random() * (canvas.width - 30),
-                        y: Math.random() * (canvas.height - 100),
-                        width: 20,
-                        height: 20,
-                        collected: false
-                    });
-                }
-                
-                // Asegurarse de que los ingredientes no estén en el aire sin plataforma
-                ingredients.forEach(ing => {
-                    let onPlatform = false;
-                    for (const platform of platforms) {
-                        if (ing.y + ing.height >= platform.y && 
-                            ing.x + ing.width > platform.x && 
-                            ing.x < platform.x + platform.width) {
-                            onPlatform = true;
-                            break;
-                        }
-                    }
                     
-                    if (!onPlatform) {
-                        ing.y = canvas.height - ing.height - 40;
+                    if (ingredients[ingredients.length - 1].floating) {
+                        floatingIngredients.push(ingredients[ingredients.length - 1]);
+                    }
+                }
+                
+                // Leche (1) - en la plataforma más alta
+                const highestPlatform = platforms.reduce((prev, curr) => curr.y < prev.y ? curr : prev);
+                ingredients.push({
+                    type: 'leche',
+                    x: highestPlatform.x + Math.random() * (highestPlatform.width - 30),
+                    y: highestPlatform.y - 30,
+                    width: 30,
+                    height: 30,
+                    collected: false
+                });
+                
+                // Fresas (4) - algunas en plataformas, algunas flotando
+                for (let i = 0; i < 4; i++) {
+                    if (Math.random() > 0.5) {
+                        // En plataforma
+                        const platform = platforms[Math.floor(Math.random() * platforms.length)];
+                        ingredients.push({
+                            type: 'fresas',
+                            x: platform.x + Math.random() * (platform.width - 30),
+                            y: platform.y - 30,
+                            width: 30,
+                            height: 30,
+                            collected: false,
+                            floating: false
+                        });
+                    } else {
+                        // Flotando en el aire (difíciles de alcanzar)
+                        ingredients.push({
+                            type: 'fresas',
+                            x: 100 + Math.random() * (canvas.width - 200),
+                            y: 100 + Math.random() * 200,
+                            width: 30,
+                            height: 30,
+                            collected: false,
+                            floating: true
+                        });
+                        floatingIngredients.push(ingredients[ingredients.length - 1]);
+                    }
+                }
+            }
+            
+            // Actualizar ingredientes flotantes
+            function updateFloatingIngredients() {
+                const now = Date.now();
+                floatingIngredients.forEach(ing => {
+                    if (!ing.collected) {
+                        // Movimiento sinusoidal para flotar
+                        ing.y += Math.sin(now / 500 + ing.x) * 0.5;
                     }
                 });
             }
             
-            // Dibujar el gato
-            function drawCat(x, y, width, height, direction) {
-                ctx.save();
-                ctx.translate(x + width/2, y + height/2);
-                if (direction === 'left') {
-                    ctx.scale(-1, 1);
+            // Dibujar el gato (ahora como emoji)
+            function drawCat() {
+                ctx.font = `${player.height}px Arial`;
+                ctx.fillText(catEmoji, player.x, player.y + player.height);
+                
+                // Efecto temporal cuando recoge un ingrediente
+                if (Date.now() - lastIngredientCollectedTime < 300) {
+                    ctx.font = '20px Arial';
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.fillText('+1', player.x + player.width/2 - 10, player.y - 10);
                 }
-                
-                // Cuerpo
-                ctx.fillStyle = '#FFA500';
-                ctx.beginPath();
-                ctx.ellipse(0, 0, width/2, height/2, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Orejas
-                ctx.fillStyle = '#FFA500';
-                ctx.beginPath();
-                ctx.moveTo(-width/3, -height/2);
-                ctx.lineTo(-width/4, -height);
-                ctx.lineTo(-width/6, -height/2);
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.moveTo(width/3, -height/2);
-                ctx.lineTo(width/4, -height);
-                ctx.lineTo(width/6, -height/2);
-                ctx.fill();
-                
-                // Ojos
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.ellipse(-width/6, -height/6, width/8, height/8, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.ellipse(width/6, -height/6, width/8, height/8, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Pupilas
-                ctx.fillStyle = 'black';
-                ctx.beginPath();
-                ctx.ellipse(-width/6, -height/6, width/16, height/16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.ellipse(width/6, -height/6, width/16, height/16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Nariz
-                ctx.fillStyle = 'pink';
-                ctx.beginPath();
-                ctx.moveTo(0, -height/10);
-                ctx.lineTo(-width/12, height/10);
-                ctx.lineTo(width/12, height/10);
-                ctx.fill();
-                
-                // Bigotes
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1;
-                
-                // Izquierda
-                ctx.beginPath();
-                ctx.moveTo(-width/12, height/10);
-                ctx.lineTo(-width/3, height/8);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(-width/12, height/10);
-                ctx.lineTo(-width/3, height/10);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(-width/12, height/10);
-                ctx.lineTo(-width/3, height/12);
-                ctx.stroke();
-                
-                // Derecha
-                ctx.beginPath();
-                ctx.moveTo(width/12, height/10);
-                ctx.lineTo(width/3, height/8);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(width/12, height/10);
-                ctx.lineTo(width/3, height/10);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(width/12, height/10);
-                ctx.lineTo(width/3, height/12);
-                ctx.stroke();
-                
-                ctx.restore();
             }
             
             // Dibujar plataformas
@@ -392,34 +411,20 @@
             function drawIngredients() {
                 ingredients.forEach(ing => {
                     if (!ing.collected) {
+                        ctx.font = `${ing.height}px Arial`;
+                        
                         switch(ing.type) {
                             case 'harina':
-                                ctx.fillStyle = '#FFFFFF';
-                                ctx.beginPath();
-                                ctx.arc(ing.x + ing.width/2, ing.y + ing.height/2, ing.width/2, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.strokeStyle = '#CCCCCC';
-                                ctx.stroke();
+                                ctx.fillText('🍞', ing.x, ing.y + ing.height);
                                 break;
                             case 'huevos':
-                                ctx.fillStyle = '#F5F5DC';
-                                ctx.beginPath();
-                                ctx.ellipse(ing.x + ing.width/2, ing.y + ing.height/2, ing.width/2, ing.height/2, 0, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.strokeStyle = '#D2B48C';
-                                ctx.stroke();
+                                ctx.fillText('🥚', ing.x, ing.y + ing.height);
                                 break;
-                            case 'frutas':
-                                ctx.fillStyle = '#FF6347';
-                                ctx.beginPath();
-                                ctx.arc(ing.x + ing.width/2, ing.y + ing.height/2, ing.width/2, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.fillStyle = '#228B22';
-                                ctx.beginPath();
-                                ctx.moveTo(ing.x + ing.width/2, ing.y);
-                                ctx.lineTo(ing.x + ing.width/3, ing.y - 5);
-                                ctx.lineTo(ing.x + ing.width/1.5, ing.y - 5);
-                                ctx.fill();
+                            case 'leche':
+                                ctx.fillText('🥛', ing.x, ing.y + ing.height);
+                                break;
+                            case 'fresas':
+                                ctx.fillText('🍓', ing.x, ing.y + ing.height);
                                 break;
                         }
                     }
@@ -447,6 +452,34 @@
                 if (!onPlatform && player.y + player.height < canvas.height) {
                     player.isJumping = true;
                 }
+                
+                // Caída del borde
+                if (player.y > canvas.height) {
+                    loseLife();
+                }
+            }
+            
+            // Perder una vida
+            function loseLife() {
+                lives--;
+                updateLivesDisplay();
+                
+                if (lives <= 0) {
+                    gameOver();
+                } else {
+                    // Respawn del jugador
+                    player.x = 50;
+                    player.y = 100;
+                    player.velocityY = 0;
+                    player.isJumping = true;
+                    catEmoji = '🙀';
+                    setTimeout(() => { catEmoji = '😺'; }, 500);
+                }
+            }
+            
+            // Actualizar display de vidas
+            function updateLivesDisplay() {
+                livesDisplay.textContent = '❤️'.repeat(lives);
             }
             
             // Verificar colisiones con ingredientes
@@ -460,16 +493,21 @@
                         
                         ing.collected = true;
                         score[ing.type]++;
+                        lastIngredientCollectedTime = Date.now();
+                        catEmoji = '😻';
+                        setTimeout(() => { catEmoji = '😺'; }, 300);
                         
                         // Actualizar contadores
                         harinaCounter.textContent = score.harina;
                         huevosCounter.textContent = score.huevos;
-                        frutasCounter.textContent = score.frutas;
+                        lecheCounter.textContent = score.leche;
+                        fresasCounter.textContent = score.fresas;
                         
                         // Verificar si se completó el pastel
                         if (score.harina >= required.harina && 
                             score.huevos >= required.huevos && 
-                            score.frutas >= required.frutas) {
+                            score.leche >= required.leche &&
+                            score.fresas >= required.fresas) {
                             endGame();
                         }
                     }
@@ -485,13 +523,7 @@
                 
                 player.y += player.velocityY;
                 
-                // Limitar al jugador dentro del canvas
-                if (player.y + player.height > canvas.height) {
-                    player.y = canvas.height - player.height;
-                    player.velocityY = 0;
-                    player.isJumping = false;
-                }
-                
+                // Limitar al jugador dentro del canvas (excepto abajo)
                 if (player.x < 0) {
                     player.x = 0;
                 }
@@ -523,7 +555,7 @@
                 drawIngredients();
                 
                 // Dibujar jugador
-                drawCat(player.x, player.y, player.width, player.height, player.direction);
+                drawCat();
             }
             
             // Dibujar nubes de fondo
@@ -562,6 +594,7 @@
                 movePlayer();
                 checkPlatformCollision();
                 checkIngredientCollision();
+                updateFloatingIngredients();
                 drawGame();
                 
                 requestAnimationFrame(gameLoop);
@@ -571,20 +604,24 @@
             function startGame() {
                 startScreen.style.display = 'none';
                 endScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
                 gameRunning = true;
                 
                 // Reiniciar jugador
                 player.x = 50;
-                player.y = 400;
+                player.y = 100;
                 player.velocityY = 0;
-                player.isJumping = false;
-                player.direction = 'right';
+                player.isJumping = true;
+                catEmoji = '😺';
                 
-                // Reiniciar puntaje
-                score = { harina: 0, huevos: 0, frutas: 0 };
+                // Reiniciar vidas y puntaje
+                lives = 3;
+                updateLivesDisplay();
+                score = { harina: 0, huevos: 0, leche: 0, fresas: 0 };
                 harinaCounter.textContent = '0';
                 huevosCounter.textContent = '0';
-                frutasCounter.textContent = '0';
+                lecheCounter.textContent = '0';
+                fresasCounter.textContent = '0';
                 
                 // Generar ingredientes
                 generateIngredients();
@@ -593,15 +630,22 @@
                 gameLoop();
             }
             
-            // Finalizar juego
+            // Finalizar juego (victoria)
             function endGame() {
                 gameRunning = false;
                 endScreen.style.display = 'flex';
             }
             
+            // Finalizar juego (derrota)
+            function gameOver() {
+                gameRunning = false;
+                gameOverScreen.style.display = 'flex';
+            }
+            
             // Event listeners
             startButton.addEventListener('click', startGame);
             restartButton.addEventListener('click', startGame);
+            tryAgainButton.addEventListener('click', startGame);
             
             // Controles del teclado
             const keys = {
@@ -616,11 +660,9 @@
                 switch(e.key) {
                     case 'ArrowLeft':
                         keys.left = true;
-                        player.direction = 'left';
                         break;
                     case 'ArrowRight':
                         keys.right = true;
-                        player.direction = 'right';
                         break;
                     case 'ArrowUp':
                     case ' ':
