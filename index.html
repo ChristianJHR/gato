@@ -26,8 +26,8 @@
 
         #game-container {
             position: relative;
-            width: 800px;
-            height: 500px;
+            width: 1000px;
+            height: 600px;
             background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
@@ -112,7 +112,7 @@
             padding: 15px;
             border-radius: 10px;
             margin: 20px;
-            max-width: 600px;
+            max-width: 800px;
             text-align: center;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             font-size: 1.1em;
@@ -123,10 +123,10 @@
             margin: 10px;
         }
 
-        @media (max-width: 850px) {
+        @media (max-width: 1050px) {
             #game-container {
                 width: 95%;
-                height: 400px;
+                height: 500px;
             }
             
             .instructions {
@@ -138,7 +138,7 @@
             }
         }
 
-        @media (max-width: 500px) {
+        @media (max-width: 600px) {
             #ui {
                 flex-direction: column;
                 gap: 5px;
@@ -161,12 +161,13 @@
     
     <div class="instructions">
         ¡Ayuda al gato 😺 a recolectar todos los ingredientes para hacer un pastel!<br>
-        Usa las flechas del teclado para moverte y la barra espaciadora para saltar.<br>
-        Ten cuidado, si te caes perderás una vida ❤️❤️❤️
+        Usa las flechas del teclado para moverte (← →) y la barra espaciadora para saltar.<br>
+        Cuidado con los perros 🐶 que te perseguirán por 5 segundos si te ven.<br>
+        Si te caes o te atacan, perderás una vida ❤️❤️❤️
     </div>
     
     <div id="game-container">
-        <canvas id="game-canvas" width="800" height="500"></canvas>
+        <canvas id="game-canvas" width="1000" height="600"></canvas>
         
         <div id="ui">
             <div id="ingredients-ui">
@@ -234,32 +235,41 @@
         let lives = 3;
         let catEmoji = '😺';
         let lastIngredientCollectedTime = 0;
+        let lastHitTime = 0;
+        let invulnerable = false;
         
         const player = {
-            x: 50,
-            y: 400,
+            x: 100,
+            y: 500,
             width: 40,
             height: 40,
-            speed: 5,
-            jumpForce: 12,
+            speed: 4, // Velocidad reducida
+            jumpForce: 11,
             velocityY: 0,
             isJumping: false,
             direction: 'right'
         };
         
+        // Plataformas más grandes y con huecos para hacerlo más difícil
         const platforms = [
-            { x: 0, y: 460, width: 800, height: 40 }, // Plataforma base
-            { x: 200, y: 400, width: 150, height: 20 },
-            { x: 400, y: 350, width: 150, height: 20 },
-            { x: 100, y: 300, width: 150, height: 20 },
-            { x: 550, y: 250, width: 150, height: 20 },
-            { x: 300, y: 200, width: 150, height: 20 },
-            { x: 50, y: 150, width: 150, height: 20 },
-            { x: 450, y: 100, width: 150, height: 20 }
+            { x: 0, y: 560, width: 300, height: 40 }, // Plataforma base izquierda
+            { x: 350, y: 560, width: 300, height: 40 }, // Plataforma base derecha
+            { x: 150, y: 450, width: 200, height: 20 },
+            { x: 450, y: 450, width: 200, height: 20 },
+            { x: 50, y: 350, width: 150, height: 20 },
+            { x: 300, y: 350, width: 150, height: 20 },
+            { x: 550, y: 350, width: 150, height: 20 },
+            { x: 200, y: 250, width: 150, height: 20 },
+            { x: 450, y: 250, width: 150, height: 20 },
+            { x: 100, y: 150, width: 150, height: 20 },
+            { x: 350, y: 150, width: 150, height: 20 },
+            { x: 600, y: 150, width: 150, height: 20 },
+            { x: 250, y: 50, width: 150, height: 20 }
         ];
         
         let ingredients = [];
         let floatingIngredients = [];
+        let enemies = [];
         
         // Ajustar tamaño del canvas
         function resizeCanvas() {
@@ -272,8 +282,12 @@
         }
         
         function adjustGameElements() {
-            platforms[0].width = canvas.width;
+            // Ajustar plataformas base al nuevo tamaño
+            platforms[0].width = canvas.width / 2 - 50;
+            platforms[1].x = canvas.width / 2 + 50;
+            platforms[1].width = canvas.width / 2 - 50;
             platforms[0].y = canvas.height - 40;
+            platforms[1].y = canvas.height - 40;
             
             if (player.y + player.height > canvas.height) {
                 player.y = canvas.height - player.height;
@@ -285,22 +299,25 @@
             ingredients = [];
             floatingIngredients = [];
             
-            // Harina (2)
+            // Harina (2) - en plataformas altas
             for (let i = 0; i < 2; i++) {
-                const platform = platforms[Math.floor(Math.random() * 3) + 4];
+                const platform = platforms[Math.floor(Math.random() * 5) + 4]; // Plataformas más altas
                 ingredients.push({
                     type: 'harina',
                     x: platform.x + Math.random() * (platform.width - 30),
                     y: platform.y - 30,
                     width: 30,
                     height: 30,
-                    collected: false
+                    collected: false,
+                    floating: false,
+                    floatSpeed: 0,
+                    floatDirection: 1
                 });
             }
             
-            // Huevos (3)
+            // Huevos (3) - algunos flotantes
             for (let i = 0; i < 3; i++) {
-                const platform = platforms[Math.floor(Math.random() * 3) + 1];
+                const platform = platforms[Math.floor(Math.random() * platforms.length)];
                 ingredients.push({
                     type: 'huevos',
                     x: platform.x + Math.random() * (platform.width - 30),
@@ -308,7 +325,9 @@
                     width: 30,
                     height: 30,
                     collected: false,
-                    floating: Math.random() > 0.5
+                    floating: Math.random() > 0.7,
+                    floatSpeed: Math.random() * 1 + 0.5,
+                    floatDirection: Math.random() > 0.5 ? 1 : -1
                 });
                 
                 if (ingredients[ingredients.length - 1].floating) {
@@ -316,7 +335,7 @@
                 }
             }
             
-            // Leche (1)
+            // Leche (1) - en la plataforma más alta
             const highestPlatform = platforms.reduce((prev, curr) => curr.y < prev.y ? curr : prev);
             ingredients.push({
                 type: 'leche',
@@ -324,12 +343,30 @@
                 y: highestPlatform.y - 30,
                 width: 30,
                 height: 30,
-                collected: false
+                collected: false,
+                floating: false,
+                floatSpeed: 0,
+                floatDirection: 1
             });
             
-            // Fresas (4)
+            // Fresas (4) - la mayoría flotantes y moviéndose
             for (let i = 0; i < 4; i++) {
-                if (Math.random() > 0.5) {
+                if (Math.random() > 0.3) {
+                    // Flotando en el aire (difíciles de alcanzar)
+                    ingredients.push({
+                        type: 'fresas',
+                        x: 100 + Math.random() * (canvas.width - 200),
+                        y: 100 + Math.random() * 300,
+                        width: 30,
+                        height: 30,
+                        collected: false,
+                        floating: true,
+                        floatSpeed: Math.random() * 1.5 + 1,
+                        floatDirection: Math.random() > 0.5 ? 1 : -1
+                    });
+                    floatingIngredients.push(ingredients[ingredients.length - 1]);
+                } else {
+                    // En plataforma
                     const platform = platforms[Math.floor(Math.random() * platforms.length)];
                     ingredients.push({
                         type: 'fresas',
@@ -338,20 +375,33 @@
                         width: 30,
                         height: 30,
                         collected: false,
-                        floating: false
+                        floating: false,
+                        floatSpeed: 0,
+                        floatDirection: 1
                     });
-                } else {
-                    ingredients.push({
-                        type: 'fresas',
-                        x: 100 + Math.random() * (canvas.width - 200),
-                        y: 100 + Math.random() * 200,
-                        width: 30,
-                        height: 30,
-                        collected: false,
-                        floating: true
-                    });
-                    floatingIngredients.push(ingredients[ingredients.length - 1]);
                 }
+            }
+        }
+        
+        // Generar enemigos (perros)
+        function generateEnemies() {
+            enemies = [];
+            
+            // 2-4 enemigos en diferentes plataformas
+            const enemyCount = Math.floor(Math.random() * 3) + 2;
+            for (let i = 0; i < enemyCount; i++) {
+                const platform = platforms[Math.floor(Math.random() * platforms.length)];
+                enemies.push({
+                    x: platform.x + Math.random() * (platform.width - 30),
+                    y: platform.y - 30,
+                    width: 30,
+                    height: 30,
+                    speed: 2,
+                    direction: Math.random() > 0.5 ? 1 : -1,
+                    chasing: false,
+                    chaseTime: 0,
+                    detectionRange: 200
+                });
             }
         }
         
@@ -360,7 +410,80 @@
             const now = Date.now();
             floatingIngredients.forEach(ing => {
                 if (!ing.collected) {
-                    ing.y += Math.sin(now / 500 + ing.x) * 0.5;
+                    // Movimiento horizontal
+                    ing.x += ing.floatSpeed * ing.floatDirection;
+                    
+                    // Cambiar dirección si llega al borde
+                    if (ing.x < 0) {
+                        ing.floatDirection = 1;
+                    } else if (ing.x + ing.width > canvas.width) {
+                        ing.floatDirection = -1;
+                    }
+                    
+                    // Movimiento vertical sinusoidal
+                    ing.y += Math.sin(now / 500 + ing.x) * 0.8;
+                }
+            });
+        }
+        
+        // Actualizar enemigos
+        function updateEnemies() {
+            const now = Date.now();
+            enemies.forEach(enemy => {
+                // Movimiento normal si no está persiguiendo
+                if (!enemy.chasing) {
+                    enemy.x += enemy.speed * enemy.direction;
+                    
+                    // Cambiar dirección si llega al borde de la plataforma
+                    const currentPlatform = platforms.find(p => 
+                        enemy.y + enemy.height >= p.y && 
+                        enemy.y + enemy.height <= p.y + p.height &&
+                        enemy.x + enemy.width > p.x && 
+                        enemy.x < p.x + p.width
+                    );
+                    
+                    if (currentPlatform) {
+                        if (enemy.x < currentPlatform.x) {
+                            enemy.direction = 1;
+                        } else if (enemy.x + enemy.width > currentPlatform.x + currentPlatform.width) {
+                            enemy.direction = -1;
+                        }
+                    }
+                    
+                    // Detección del jugador
+                    const distanceToPlayer = Math.sqrt(
+                        Math.pow(player.x - enemy.x, 2) + 
+                        Math.pow(player.y - enemy.y, 2)
+                    );
+                    
+                    if (distanceToPlayer < enemy.detectionRange) {
+                        enemy.chasing = true;
+                        enemy.chaseTime = now + 5000; // Perseguir por 5 segundos
+                    }
+                } else {
+                    // Perseguir al jugador
+                    if (player.x < enemy.x) {
+                        enemy.direction = -1;
+                    } else {
+                        enemy.direction = 1;
+                    }
+                    
+                    enemy.x += enemy.speed * 1.5 * enemy.direction;
+                    
+                    // Verificar si termina el tiempo de persecución
+                    if (now > enemy.chaseTime) {
+                        enemy.chasing = false;
+                    }
+                }
+                
+                // Verificar colisión con el jugador
+                if (!invulnerable && 
+                    player.x < enemy.x + enemy.width &&
+                    player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height &&
+                    player.y + player.height > enemy.y) {
+                    
+                    playerHit();
                 }
             });
         }
@@ -369,6 +492,13 @@
         function drawCat() {
             ctx.font = `${player.height}px Arial`;
             ctx.fillText(catEmoji, player.x, player.y + player.height);
+            
+            // Efecto de invulnerabilidad (parpadeo)
+            if (invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeText(catEmoji, player.x, player.y + player.height);
+            }
             
             if (Date.now() - lastIngredientCollectedTime < 300) {
                 ctx.font = '20px Arial';
@@ -418,6 +548,21 @@
             });
         }
         
+        // Dibujar enemigos
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.font = `${enemy.height}px Arial`;
+                ctx.fillText('🐶', enemy.x, enemy.y + enemy.height);
+                
+                // Indicador de persecución
+                if (enemy.chasing) {
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = 'red';
+                    ctx.fillText('!', enemy.x + enemy.width/2 - 5, enemy.y - 5);
+                }
+            });
+        }
+        
         // Verificar colisiones con plataformas
         function checkPlatformCollision() {
             let onPlatform = false;
@@ -439,8 +584,33 @@
                 player.isJumping = true;
             }
             
+            // Caída del borde
             if (player.y > canvas.height) {
                 loseLife();
+            }
+        }
+        
+        // Jugador golpeado
+        function playerHit() {
+            if (!invulnerable) {
+                lives--;
+                updateLivesDisplay();
+                lastHitTime = Date.now();
+                invulnerable = true;
+                catEmoji = '🙀';
+                
+                // Aplicar retroceso
+                player.velocityY = -8;
+                player.x += player.direction === 'right' ? -50 : 50;
+                
+                setTimeout(() => {
+                    catEmoji = '😺';
+                    invulnerable = false;
+                }, 1500);
+                
+                if (lives <= 0) {
+                    gameOver();
+                }
             }
         }
         
@@ -448,16 +618,23 @@
         function loseLife() {
             lives--;
             updateLivesDisplay();
+            lastHitTime = Date.now();
+            invulnerable = true;
+            catEmoji = '🙀';
+            
+            // Respawn del jugador
+            player.x = 100;
+            player.y = 100;
+            player.velocityY = 0;
+            player.isJumping = true;
+            
+            setTimeout(() => {
+                catEmoji = '😺';
+                invulnerable = false;
+            }, 1500);
             
             if (lives <= 0) {
                 gameOver();
-            } else {
-                player.x = 50;
-                player.y = 100;
-                player.velocityY = 0;
-                player.isJumping = true;
-                catEmoji = '🙀';
-                setTimeout(() => { catEmoji = '😺'; }, 500);
             }
         }
         
@@ -498,12 +675,14 @@
         
         // Mover al jugador
         function movePlayer() {
+            // Gravedad
             if (player.isJumping) {
                 player.velocityY += 0.5;
             }
             
             player.y += player.velocityY;
             
+            // Limitar al jugador dentro del canvas (excepto abajo)
             if (player.x < 0) {
                 player.x = 0;
             }
@@ -515,8 +694,10 @@
         
         // Dibujar el juego
         function drawGame() {
+            // Limpiar canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Dibujar cielo
             const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             skyGradient.addColorStop(0, '#87CEEB');
             skyGradient.addColorStop(1, '#E0F7FA');
@@ -526,13 +707,15 @@
             drawClouds();
             drawPlatforms();
             drawIngredients();
+            drawEnemies();
             drawCat();
         }
         
-        // Dibujar nubes
+        // Dibujar nubes de fondo
         function drawClouds() {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
             
+            // Nube 1
             ctx.beginPath();
             ctx.arc(100, 80, 30, 0, Math.PI * 2);
             ctx.arc(130, 80, 35, 0, Math.PI * 2);
@@ -540,6 +723,7 @@
             ctx.arc(130, 60, 25, 0, Math.PI * 2);
             ctx.fill();
             
+            // Nube 2
             ctx.beginPath();
             ctx.arc(400, 120, 25, 0, Math.PI * 2);
             ctx.arc(430, 120, 30, 0, Math.PI * 2);
@@ -547,11 +731,20 @@
             ctx.arc(430, 100, 20, 0, Math.PI * 2);
             ctx.fill();
             
+            // Nube 3
             ctx.beginPath();
-            ctx.arc(600, 60, 20, 0, Math.PI * 2);
-            ctx.arc(630, 60, 25, 0, Math.PI * 2);
-            ctx.arc(660, 60, 20, 0, Math.PI * 2);
-            ctx.arc(630, 40, 15, 0, Math.PI * 2);
+            ctx.arc(700, 60, 20, 0, Math.PI * 2);
+            ctx.arc(730, 60, 25, 0, Math.PI * 2);
+            ctx.arc(760, 60, 20, 0, Math.PI * 2);
+            ctx.arc(730, 40, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Nube 4
+            ctx.beginPath();
+            ctx.arc(800, 100, 25, 0, Math.PI * 2);
+            ctx.arc(830, 100, 30, 0, Math.PI * 2);
+            ctx.arc(860, 100, 25, 0, Math.PI * 2);
+            ctx.arc(830, 80, 20, 0, Math.PI * 2);
             ctx.fill();
         }
         
@@ -563,6 +756,7 @@
             checkPlatformCollision();
             checkIngredientCollision();
             updateFloatingIngredients();
+            updateEnemies();
             drawGame();
             
             requestAnimationFrame(gameLoop);
@@ -575,12 +769,15 @@
             gameOverScreen.style.display = 'none';
             gameRunning = true;
             
-            player.x = 50;
+            // Reiniciar jugador
+            player.x = 100;
             player.y = 100;
             player.velocityY = 0;
             player.isJumping = true;
             catEmoji = '😺';
+            invulnerable = false;
             
+            // Reiniciar vidas y puntaje
             lives = 3;
             updateLivesDisplay();
             score = { harina: 0, huevos: 0, leche: 0, fresas: 0 };
@@ -589,8 +786,12 @@
             lecheCounter.textContent = '0';
             fresasCounter.textContent = '0';
             
+            // Generar elementos del juego
             generateIngredients();
+            generateEnemies();
             resizeCanvas();
+            
+            // Iniciar bucle del juego
             gameLoop();
         }
         
@@ -619,14 +820,21 @@
         };
         
         window.addEventListener('keydown', (e) => {
+            if (!gameRunning && e.key === 'Enter') {
+                startGame();
+                return;
+            }
+            
             if (!gameRunning) return;
             
             switch(e.key) {
                 case 'ArrowLeft':
                     keys.left = true;
+                    player.direction = 'left';
                     break;
                 case 'ArrowRight':
                     keys.right = true;
+                    player.direction = 'right';
                     break;
                 case 'ArrowUp':
                 case ' ':
@@ -649,7 +857,7 @@
             }
         });
         
-        // Mover al jugador
+        // Mover al jugador según las teclas presionadas
         function handleMovement() {
             if (keys.left) {
                 player.x -= player.speed;
